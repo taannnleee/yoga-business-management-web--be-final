@@ -1,0 +1,54 @@
+# Development properties (also used for docker-compose)
+server:
+  port: 8080
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: yoga-business-management-web
+  datasource:
+    url: jdbc:postgresql://junction.proxy.rlwy.net:26401/railway?createDatabaseIfNotExist=true&autoReconnect=true&useSSL=false
+    username: postgres
+    password: UbkkKLlkNTUGGfWduWcLuUyVPEhzImPE
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: LeeTaan1902@gmail.com
+    password: blermftlgtbbwqsx
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+openapi:
+  service:
+    api-docs: api-service
+    server: http://localhost:8080
+    title: API Service
+    version: 1.0.0
+
+jwt:
+  expiryTime: 8640000
+  secretKey: ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+  refreshkey: d6cc0a088c07683c65cd266860cab8d94b3a1937b17420d9da30ca299c09fb77
+  resetKey: 01be30bb4a27765c37462e6bf2a0bf8b6c109f9be9d81e6fd56455db1a736a43
+
+payment:
+  vnPay:
+    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    tmnCode: 58X4B4HP
+    secretKey: VRLDWNVWDNPCOEPBZUTWSEDQAGXJCNGZ
+    returnUrl: http://localhost:8080/api/payment/vn-pay-callback
+    version: 2.1.0
+    command: pay
+    orderType: other
+
+frontend:
+  url: http://localhost:3000

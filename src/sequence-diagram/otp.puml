@@ -1,0 +1,50 @@
+@startuml SendOTP
+title Gửi OTP
+
+actor Actor
+boundary verifyPage
+control AuthenticationController
+entity userService
+entity emailService
+
+Database Database
+
+Actor -> verifyPage: Request OTP
+activate verifyPage
+verifyPage -> AuthenticationController: sendOTPRequest()
+activate AuthenticationController
+AuthenticationController -> userService: findByEmail(email)
+activate userService
+userService -> Database: findByEmail(email)
+activate Database
+
+alt User is null
+    Database --> userService: return null
+    userService --> AuthenticationController: return null
+    AuthenticationController --> verifyPage: Account not found
+    deactivate verifyPage
+else User is not null
+    Database --> userService: return user
+    deactivate Database
+    userService -> emailService: sendOTP(email, message, otp)
+    activate emailService
+    emailService -> Database: saveOTP(userID)
+    deactivate emailService
+
+    alt OTP sent successfully
+        Database --> emailService: OTP saved
+        emailService --> userService: OTP sent successfully
+        userService --> AuthenticationController: OTP sent successfully
+        AuthenticationController --> verifyPage: OTP sent successfully
+        deactivate verifyPage
+    else OTP sending failed
+        emailService --> userService: OTP failed to send
+        userService --> AuthenticationController: OTP failed to send
+        AuthenticationController --> verifyPage: OTP sending failed
+        deactivate verifyPage
+    end
+end
+
+deactivate userService
+deactivate AuthenticationController
+@enduml

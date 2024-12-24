@@ -1,0 +1,35 @@
+@startuml
+actor User as "Actor"
+boundary "HomePage" as HomePage
+control "CategoryController" as Controller
+control "CategoryService" as Service
+entity "CategoryRepository" as Repository
+entity "CategoryMapper" as Mapper
+database "Database" as DB
+
+autonumber
+activate HomePage
+User -> HomePage: Click homepage
+HomePage -> Controller: GET /api/category/with-products
+activate Controller
+Controller -> Service: getCategoriesWithProducts()
+activate Service
+Service -> Repository: findAll()
+activate Repository
+Repository -> DB: SELECT * FROM categories
+activate DB
+DB --> Repository: List<Category>
+deactivate DB
+Repository --> Service: List<Category>
+deactivate Repository
+Service -> Mapper: toCategoryWithProductResponse(category)
+activate Mapper
+Mapper --> Service: CategoryWithProductResponse
+deactivate Mapper
+Service -> Controller: List<CategoryWithProductResponse>
+deactivate Service
+Controller --> HomePage: ApiResponse<List<CategoryWithProductResponse>>
+activate Controller
+HomePage --> User: Display categories and products
+deactivate HomePage
+@enduml

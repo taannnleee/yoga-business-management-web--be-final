@@ -1,0 +1,46 @@
+@startuml
+actor User as "Actor"
+boundary "ProductPage" as ProductPage
+
+control "ProductController" as ProductController
+control "ProductService" as ProductService
+entity "ProductRepository" as ProductRepository
+entity "ProductMapper" as ProductMapper
+entity "GenericMapper" as GenericMapper
+database "Database" as DB
+
+autonumber
+
+
+
+alt User filter Product
+    activate ProductPage
+    ProductPage -> ProductController: GET /filter?subCategoryId=?&categoryId=?&keyword=?&page=?&pageSize=?
+    activate ProductController
+    ProductController -> ProductService: filterProducts(Long subCategoryId, Long categoryId, String keyword, Pageable pageable)
+    activate ProductService
+    ProductService -> ProductRepository: filterProducts(Long subCategoryId, Long categoryId, String keyword, Pageable pageable)
+    activate ProductRepository
+    ProductRepository -> DB: filterProducts(subCategoryId, categoryId, keyword, pageable)
+    activate DB
+    DB --> ProductRepository: List<Product>
+    deactivate DB
+    ProductRepository --> ProductService: Page<Product>
+    deactivate ProductRepository
+    ProductService -> ProductMapper: productsToProductResponses(List<Product>)
+    activate ProductMapper
+    ProductMapper --> ProductService: List<ProductResponse>
+    deactivate ProductMapper
+    ProductService -> GenericMapper: toListDto(List<ProductResponse>, Page<Product>)
+    activate GenericMapper
+    GenericMapper --> ProductService: ListDto<List<ProductResponse>>
+    deactivate GenericMapper
+    ProductService -> ProductController: Return ListDto<List<ProductResponse>>
+    deactivate ProductService
+    ProductController --> ProductPage: ApiResponse<ListDto<List<ProductResponse>>>
+    ProductPage --> User: Display filtered products
+    deactivate ProductController
+    deactivate ProductService
+    deactivate ProductRepository
+end
+@enduml

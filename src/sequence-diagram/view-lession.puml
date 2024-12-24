@@ -1,0 +1,26 @@
+@startuml
+
+actor User
+boundary LectureController
+entity LecturesService
+entity LecturesRepository
+entity Lectures
+entity LectureResponse
+entity LectureMapper
+entity DB
+
+User -> LectureController : GET /api/lecture/get-lecture/{id}
+LectureController -> LecturesService : getLectureById(id)
+LecturesService -> LecturesRepository : findById(id)
+LecturesRepository --> DB : SELECT * FROM lectures WHERE id = Long.valueOf(id)
+DB --> LecturesRepository : Optional<Lectures>
+
+LecturesService --> Lectures : lecturesOptional.get()
+
+LecturesService -> LectureMapper : toLectureResponse(lectures)
+LectureMapper --> LectureResponse : map properties from Lectures to LectureResponse
+
+LecturesService --> LectureController : lectureResponse
+LectureController --> User : "get lecture by id successfully", lectureResponse
+
+@enduml

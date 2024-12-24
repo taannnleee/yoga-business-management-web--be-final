@@ -1,0 +1,33 @@
+@startuml
+
+actor User
+boundary CourseController
+entity CourseService
+entity TopicRepository
+entity CoursesRepository
+entity CourseMapper
+entity TopicCourseResponse
+entity CourseResponse
+entity DB
+
+User -> CourseController : GET /api/course/all-course
+CourseController -> CourseService : getAllCourses()
+CourseService -> TopicRepository : findAll()
+TopicRepository --> DB : SELECT * FROM topics
+DB --> TopicRepository : List<Topic>
+
+CourseService -> CoursesRepository : findAllByTopic(topic)
+CoursesRepository --> DB : SELECT * FROM courses WHERE topic_id = topic.id
+DB --> CoursesRepository : List<Courses>
+
+CourseService -> CourseMapper : toCoursesResponseList(topicList)
+CourseMapper --> CourseService : List<CourseResponse>
+
+CourseService -> CourseMapper : toTopicCourseResponseList(topicCourseResponses)
+CourseMapper --> CourseService : List<TopicCourseResponse>
+
+CourseService --> CourseController : courseResponseList
+CourseController --> User : "get all courses successfully", courseResponseList
+
+
+@enduml

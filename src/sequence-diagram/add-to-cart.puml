@@ -1,0 +1,36 @@
+@startuml
+
+actor User
+boundary Controller
+entity CartService
+entity CartRepository
+entity CartItemRepository
+entity CartItemService
+entity JwtUtil
+entity Mappers
+entity DB
+
+User -> Controller : POST /add-to-cart
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> CartService : addToCart(cartCreationRequest, request)
+CartService -> CartRepository : findCartByUser(user)
+CartRepository --> DB : SELECT * FROM cart WHERE user_id = user.id
+DB --> CartRepository : Cart
+
+CartService -> CartRepository : findProductById(cartCreationRequest.getProductId)
+CartRepository --> DB : SELECT * FROM product WHERE id = cartCreationRequest.getProductId
+DB --> CartRepository : Product
+
+CartService -> Mappers : mapperEntityToDto(cart.getCartItems(), CartItemResponse.class)
+Mappers --> CartService : List<CartItemResponse>
+
+CartService -> Mappers : convertToDto(cart, CartResponse.class)
+Mappers --> CartService : CartResponse
+
+CartService --> Controller : ApiResponse<CartResponse>
+Controller --> User : "add to cart success", cartResponse
+
+
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+
+actor User
+boundary CourseController
+entity CoursesService
+entity CoursesRepository
+entity Courses
+entity Sections
+entity Lectures
+entity DB
+
+User -> CourseController : GET /api/course/get-course/{id}
+CourseController -> CoursesService : getCourse(id)
+CoursesService -> CoursesRepository : findById(id)
+CoursesRepository --> DB : SELECT * FROM courses WHERE id = Long.valueOf(id)
+DB --> CoursesRepository : Optional<Courses>
+
+CoursesService --> Courses : coursesOptional.get()
+
+Courses -> Courses : Get sections
+Courses -> Sections : getSections()
+Sections -> CoursesService : Get lectures for each section
+
+CoursesService --> CourseController : courses
+CourseController --> User : "get courses by id successfully", courses
+
+@enduml

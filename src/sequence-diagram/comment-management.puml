@@ -1,0 +1,80 @@
+@startuml
+
+actor User
+boundary Controller
+entity CommentService
+entity CommentRepository
+entity ProductRepository
+entity UserRepository
+entity ProductService
+entity CommentMapper
+entity JwtUtil
+entity "Database" as DB
+
+User -> Controller : POST /comments
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> CommentService : addComment(CommentCreationRequest, User)
+CommentService -> ProductRepository : findById(commentRequest.getProductId)
+ProductRepository --> DB : SELECT * FROM product WHERE id = commentRequest.getProductId
+DB --> ProductRepository : Product
+
+CommentService -> CommentRepository : findById(parentCommentId) (if exists)
+CommentRepository --> DB : SELECT * FROM comment WHERE id = parentCommentId
+DB --> CommentRepository : ParentComment
+
+CommentService -> CommentMapper : toComment(CommentCreationRequest)
+CommentMapper --> CommentService : Comment
+
+CommentService -> CommentRepository : save(Comment)
+CommentRepository --> DB : INSERT INTO comment (...) VALUES (...)
+DB --> CommentRepository : SavedComment
+
+CommentService -> ProductService : updateProduct(Product, rating, sold)
+ProductService -> ProductRepository : findById(productId)
+ProductRepository --> DB : SELECT * FROM product WHERE id = productId
+DB --> ProductRepository : Product
+
+ProductService -> ProductRepository : save(Product)
+ProductRepository --> DB : UPDATE product SET averageRating = rating, sold = sold WHERE id = productId
+DB --> ProductRepository : UpdatedProduct
+
+CommentService -> CommentMapper : toCommentOrderResponse(SavedComment)
+CommentMapper --> CommentService : CommentOrderResponse
+
+CommentService --> Controller : ApiResponse<CommentOrderResponse>
+Controller --> User : "Comment added successfully"
+
+User -> Controller : GET /by-product/{id}
+Controller -> CommentService : byProduct(pageable, productId, ratePoint)
+
+CommentService -> ProductService : getProductById(productId)
+ProductService -> ProductRepository : findById(productId)
+ProductRepository --> DB : SELECT * FROM product WHERE id = productId
+DB --> ProductRepository : Product
+ProductService --> CommentService : Product
+
+CommentService -> CommentRepository : findByProduct(product, pageable)
+CommentRepository --> DB : SELECT * FROM comment WHERE product_id = productId ORDER BY ratePoint (if ratePoint > 0) or ORDER BY createdAt DESC
+DB --> CommentRepository : CommentPage
+
+CommentService -> CommentMapper : toCommentResponses(CommentPage.content)
+CommentMapper --> CommentService : List<CommentResponse>
+
+CommentService -> CommentService : setReplies(CommentResponse)
+CommentService -> CommentRepository : findByParentCommentId(commentResponse.id)
+CommentRepository --> DB : SELECT * FROM comment WHERE parentCommentId = commentResponse.id
+DB --> CommentRepository : List<Replies>
+CommentService -> CommentMapper : toCommentResponses(Replies)
+CommentMapper --> CommentService : List<CommentResponse>
+
+CommentService --> Controller : ApiResponse<ListDto<List<CommentResponse>>>
+Controller --> User : "Get all comments successfully"
+
+DB -> CommentRepository : Provides CRUD operations for Comment entity
+DB -> ProductRepository : Provides CRUD operations for Product entity
+DB -> UserRepository : Provides CRUD operations for User entity
+DB -> CommentMapper : Mapping between database entities and DTOs
+
+@enduml

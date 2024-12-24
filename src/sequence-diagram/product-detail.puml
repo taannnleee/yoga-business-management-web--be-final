@@ -1,0 +1,52 @@
+@startuml
+actor User as "Actor"
+boundary "ProductPage" as ProductPage
+
+control "ProductController" as ProductController
+control "ProductService" as ProductService
+entity "ProductRepository" as ProductRepository
+entity "ProductMapper" as ProductMapper
+entity "GenericMapper" as GenericMapper
+entity "GlobalExceptionHandler" as GlobalExceptionHandler
+database "Database" as DB
+
+autonumber
+
+activate ProductPage
+User -> ProductPage: Clicks a product
+ProductPage -> ProductController: GET /api/product-detail/getProduct/{id}
+activate ProductController
+ProductController -> ProductService: getProductDetail(String id)
+activate ProductService
+ProductService -> ProductRepository: findProductById(Long id)
+activate ProductRepository
+ProductRepository -> DB: findProductById(id)
+activate DB
+DB --> ProductRepository: Product (null if not found)
+deactivate DB
+ProductRepository --> ProductService: Optional<Product>
+
+opt Product not found
+    ProductService -> GlobalExceptionHandler: new AppException(ErrorCode.PRODUCT_NOT_FOUND)
+    activate GlobalExceptionHandler
+    GlobalExceptionHandler -> ProductService: handlingAppException(AppException e)
+    ProductService --> ProductController: Return ApiResponse with ErrorCode.PRODUCT_NOT_FOUND
+    deactivate GlobalExceptionHandler
+else Product found
+    ProductRepository --> ProductService: Product
+    ProductService -> ProductMapper: productToProductResponse(Product)
+    activate ProductMapper
+    ProductMapper --> ProductService: ProductResponse
+    deactivate ProductMapper
+    ProductService -> GenericMapper: toProductDetailDto(ProductResponse)
+    activate GenericMapper
+    GenericMapper --> ProductService: ProductDetailDto
+    deactivate GenericMapper
+    ProductService -> ProductController: Return ApiResponse<ProductDetailDto>
+end
+ProductController --> ProductPage: ApiResponse<ProductDetailDto> or ApiResponse with ErrorCode.PRODUCT_NOT_FOUND
+ProductPage --> User: Display detailed product information or show error message
+deactivate ProductController
+deactivate ProductService
+deactivate ProductRepository
+@enduml

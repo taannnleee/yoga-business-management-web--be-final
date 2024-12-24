@@ -1,0 +1,39 @@
+@startuml
+
+actor User
+boundary CourseController
+boundary TeacherController
+entity TeacherService
+entity CourseService
+entity TeacherRepository
+entity CoursesRepository
+entity TeacherMapper
+entity CourseMapper
+entity DB
+
+User -> TeacherController : GET /api/teacher/all-teachers
+TeacherController -> TeacherService : getAllTeacher()
+TeacherService -> TeacherRepository : findAll()
+TeacherRepository --> DB : SELECT * FROM teachers
+DB --> TeacherRepository : List<Teacher>
+
+TeacherService -> TeacherMapper : toTeacherResponseList(teachers)
+TeacherMapper --> TeacherService : List<TeacherResponse>
+
+TeacherService --> TeacherController : list
+TeacherController --> User : "get all teacher success", list
+
+User -> CourseController : GET /api/course/get-outstanding-courses
+CourseController -> CourseService : getOutstandingCourses()
+CourseService -> CoursesRepository : findTop4ByOrderByIdAsc()
+CoursesRepository --> DB : SELECT * FROM courses ORDER BY id ASC LIMIT 4
+DB --> CoursesRepository : List<Courses>
+
+CourseService -> CourseMapper : toCoursesResponseList(coursesList)
+CourseMapper --> CourseService : List<CourseResponse>
+
+CourseService --> CourseController : list
+CourseController --> User : "get courses outstanding successfully", list
+
+
+@enduml

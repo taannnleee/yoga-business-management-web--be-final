@@ -1,0 +1,39 @@
+@startuml
+
+actor User
+boundary NotificationController
+entity NotificationService
+entity NotificationRepository
+entity JwtUtil
+entity DB
+
+User -> NotificationController : GET /api/notification/get-all-of-user
+NotificationController -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> NotificationController : User
+
+NotificationController -> NotificationService : getAllNotificationByUser(request)
+NotificationService -> NotificationRepository : findAllByUser(user)
+NotificationRepository --> DB : SELECT * FROM notifications WHERE user_id = user.id
+DB --> NotificationRepository : List<Notification>
+
+NotificationService --> NotificationController : list (reversed)
+NotificationController --> User : "get all notification by id successfully", list
+
+User -> NotificationController : GET /api/notification/change-status/{id}
+NotificationController -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> NotificationController : User
+
+NotificationController -> NotificationService : changeStatus(request, id)
+NotificationService -> NotificationRepository : findById(id)
+NotificationRepository --> DB : SELECT * FROM notifications WHERE id = id
+DB --> NotificationRepository : Notification
+
+NotificationService -> NotificationRepository : update(notification)
+NotificationRepository --> DB : UPDATE notifications SET read = true WHERE id = notification.id
+DB --> NotificationRepository : UpdatedNotification
+
+NotificationService --> NotificationController : notification
+NotificationController --> User : "change status notification successfully", notification
+
+
+@enduml

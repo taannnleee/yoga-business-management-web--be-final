@@ -1,0 +1,48 @@
+@startuml
+
+actor User
+boundary Controller
+entity ProductService
+entity ProductRepository
+entity ProductMapper
+entity DB
+
+User -> Controller : GET /api/product/filter
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> ProductService : filterProducts(subCategoryId, categoryId, keyword, pageable)
+ProductService -> ProductRepository : filterProducts(subCategoryId, categoryId, keyword, pageable)
+ProductRepository --> DB : SELECT * FROM products WHERE (sub_category_id = subCategoryId OR category_id = categoryId) AND (title LIKE '%' + keyword + '%')
+DB --> ProductRepository : Page<Product>
+
+ProductService -> ProductMapper : productsToProductResponses(productPage.getContent())
+ProductMapper --> ProductService : List<ProductResponse>
+
+ProductService -> Mappers : toListDto(productResponses, productPage)
+Mappers --> ProductService : ListDto<List<ProductResponse>>
+
+ProductService --> Controller : ApiResponse<ListDto<List<ProductResponse>>>
+Controller --> User : "Filtered products retrieved successfully", response
+
+User -> Controller : GET /api/product/filter (with different parameters)
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> ProductService : filterProducts(subCategoryId, categoryId, keyword, pageable)
+ProductService -> ProductRepository : filterProducts(subCategoryId, categoryId, keyword, pageable)
+ProductRepository --> DB : SELECT * FROM products WHERE (sub_category_id = subCategoryId OR category_id = categoryId) AND (title LIKE '%' + keyword + '%')
+DB --> ProductRepository : Page<Product>
+
+ProductService -> ProductMapper : productsToProductResponses(productPage.getContent())
+ProductMapper --> ProductService : List<ProductResponse>
+
+ProductService -> Mappers : toListDto(productResponses, productPage)
+Mappers --> ProductService : ListDto<List<ProductResponse>>
+
+ProductService --> Controller : ApiResponse<ListDto<List<ProductResponse>>>
+Controller --> User : "Filtered products retrieved successfully", response
+
+DB -> ProductRepository : Provides CRUD operations for Product entity
+
+@enduml

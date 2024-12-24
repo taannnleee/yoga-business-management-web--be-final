@@ -1,0 +1,60 @@
+
+version: '3'
+services:
+  social-media-volume-db:
+    container_name: social-media-db
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE= yogabusinessmanagementweb
+      - MYSQL_ROOT_HOST=%
+    ports:
+      - "3307:3306"
+    volumes:
+      - social-media-volume-db:/var/lib/mysql
+
+volumes:
+  social-media-volume-db:
+
+#version: '3.9'
+#
+#services:
+#  api-service-test:
+#    container_name: social-media
+#    build:
+#      context: ./
+#      dockerfile: Dockerfile
+#    ports:
+#      - '8080:8080'
+#    networks:
+#      - backend
+#    depends_on:
+#      - mysql-db
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/yogabusinessmanagementweb
+#      SPRING_DATASOURCE_USERNAME: root
+#      SPRING_DATASOURCE_PASSWORD: root
+#      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+#      SPRING_JPA_SHOW_SQL: true
+#      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+#      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+#
+#  mysql-db:
+#    build:
+#      context: ./mysql
+#      dockerfile: Dockerfile
+#    container_name: social-media-db
+#    ports:
+#      - "3307:3306"
+#    volumes:
+#      - code-solution-data:/var/lib/mysql
+#    networks:
+#      - backend
+#
+#networks:
+#  backend:
+#    driver: bridge
+#
+#volumes:
+#  code-solution-data:
+

@@ -1,0 +1,12 @@
+#server:
+#  port: 8080
+#spring:
+#  config:
+#    activate:
+#      on-profile: dev
+#openapi:
+#  service:
+#    api-docs: api-service
+#    server: http://localhost:8080
+#    title: ${API_TITLE:DUMMY-API-TITLE}
+#    version: 1.0.0

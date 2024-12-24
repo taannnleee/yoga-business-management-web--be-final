@@ -1,0 +1,21 @@
+@startuml
+
+actor User
+boundary TeacherController
+entity TeacherService
+entity TeacherRepository
+entity Teacher
+entity DB
+
+User -> TeacherController : GET /api/teacher/get-teacher/{id}
+TeacherController -> TeacherService : getTeacherByid(id)
+TeacherService -> TeacherRepository : findById(id)
+TeacherRepository --> DB : SELECT * FROM teachers WHERE id = Long.valueOf(id)
+DB --> TeacherRepository : Optional<Teacher>
+
+TeacherService --> Teacher : teacherRepository.findById(Long.valueOf(id)).orElseThrow(AppException(ErrorCode.TEACHER_NOT_FOUND))
+
+TeacherService --> TeacherController : teacher
+TeacherController --> User : "get teacher by id success", teacher
+
+@enduml

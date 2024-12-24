@@ -1,0 +1,115 @@
+@startuml
+
+actor User
+boundary Controller
+entity CartService
+entity CartRepository
+entity CartItemRepository
+entity CartItemService
+entity JwtUtil
+entity Mappers
+entity DB
+
+User -> Controller : GET /show-cart
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> CartService : showCart(request)
+CartService -> CartRepository : findCartByUser(user)
+CartRepository --> DB : SELECT * FROM cart WHERE user_id = user.id
+DB --> CartRepository : Cart
+
+CartService -> Mappers : mapperEntityToDto(cart.getCartItems(), CartItemResponse.class)
+Mappers --> CartService : List<CartItemResponse>
+
+CartService -> Mappers : convertToDto(cart, CartResponse.class)
+Mappers --> CartService : CartResponse
+
+CartService --> Controller : ApiResponse<CartResponse>
+Controller --> User : "show cart success", cartResponse
+
+User -> Controller : POST /remove-from-cart
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> CartService : removeFromCart(request, cartDeleteRequest)
+CartService -> CartRepository : findCartByUser(user)
+CartRepository --> DB : SELECT * FROM cart WHERE user_id = user.id
+DB --> CartRepository : Cart
+
+CartService -> CartRepository : findCartItemByProductId(cartDeleteRequest.getProductId)
+CartRepository --> DB : SELECT * FROM cart_item WHERE product_id = cartDeleteRequest.getProductId
+DB --> CartRepository : CartItem
+
+CartService -> CartItemRepository : delete(itemToRemove)
+CartItemRepository --> DB : DELETE FROM cart_item WHERE id = itemToRemove.id
+DB --> CartItemRepository : DeletedItem
+
+CartService -> Mappers : mapperEntityToDto(cart.getCartItems(), CartItemResponse.class)
+Mappers --> CartService : List<CartItemResponse]
+
+CartService -> Mappers : convertToDto(cart, CartResponse.class)
+Mappers --> CartService : CartResponse
+
+CartService --> Controller : ApiResponse<CartResponse>
+Controller --> User : "remove from cart item success", cartResponse
+
+User -> Controller : POST /increase-to-cart
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> CartService : increaseToCart(cartItemCreationRequest, request)
+CartService -> CartItemService : findCartItemById(cartItemCreationRequest.getId)
+CartItemService -> CartItemRepository : findCartItemById(cartItemCreationRequest.getId)
+CartItemRepository --> DB : SELECT * FROM cart_item WHERE id = cartItemCreationRequest.getId
+DB --> CartItemRepository : CartItem
+
+CartService -> CartItemRepository : save(cartItem)
+CartItemRepository --> DB : UPDATE cart_item SET quantity = cartItem.getQuantity(), total_price = cartItem.getTotalPrice() WHERE id = cartItem.getId()
+DB --> CartItemRepository : UpdatedCartItem
+
+CartService -> CartRepository : findCartByCartItems(cartItem)
+CartRepository --> DB : SELECT * FROM cart WHERE id = cartItem.getCartId()
+DB --> CartRepository : Cart
+
+CartService -> Mappers : toCartItemResponse(cartItem)
+Mappers --> CartService : CartItemResponse
+
+CartService -> CartRepository : updateCartTotal(cart)
+CartRepository --> DB : UPDATE cart SET total_price = cart.getTotalPrice(), total_item = cart.getCartItems().size() WHERE id = cart.getId()
+DB --> CartRepository : UpdatedCart
+
+CartService --> Controller : ApiResponse<CartItemResponse>
+Controller --> User : "increase to cart item success", cartItem
+
+User -> Controller : POST /subtract-from-cart-item
+Controller -> JwtUtil : getUserFromRequest(request)
+JwtUtil --> Controller : User
+
+Controller -> CartService : subtractFromCartItem(cartItemCreationRequest, request)
+CartService -> CartItemService : findCartItemById(cartItemCreationRequest.getId)
+CartItemService -> CartItemRepository : findCartItemById(cartItemCreationRequest.getId)
+CartItemRepository --> DB : SELECT * FROM cart_item WHERE id = cartItemCreationRequest.getId
+DB --> CartItemRepository : CartItem
+
+CartService -> CartItemRepository : save(cartItem)
+CartItemRepository --> DB : UPDATE cart_item SET quantity = cartItem.getQuantity(), total_price = cartItem.getTotalPrice() WHERE id = cartItem.getId()
+DB --> CartItemRepository : UpdatedCartItem
+
+CartService -> CartRepository : findCartByCartItems(cartItem)
+CartRepository --> DB : SELECT * FROM cart WHERE id = cartItem.getCartId()
+DB --> CartRepository : Cart
+
+CartService -> Mappers : toCartItemResponse(cartItem)
+Mappers --> CartService : CartItemResponse
+
+CartService -> CartRepository : updateCartTotal(cart)
+CartRepository --> DB : UPDATE cart SET total_price = cart.getTotalPrice(), total_item = cart.getCartItems().size() WHERE id = cart.getId()
+DB --> CartRepository : UpdatedCart
+
+CartService --> Controller : ApiResponse<CartItemResponse>
+Controller --> User : "subtract from cart success", cartItem
+
+
+
+@enduml

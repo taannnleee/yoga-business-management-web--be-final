@@ -1,0 +1,103 @@
+@startuml
+actor User as "Actor"
+boundary "ProductPage" as ProductPage
+
+
+control "ProductController" as ProductController
+control "WishlistService" as WishlistService
+entity "WishlistRepository" as WishlistRepository
+entity "JwtUtil" as JwtUtil
+database "Database" as DB
+autonumber
+
+activate ProductPage
+User -> ProductPage: Clicks "View Wishlist"
+ProductPage -> ProductController: GET /get-wishlist-of-user
+activate ProductController
+ProductController -> JwtUtil: getUserFromRequest(request)
+activate JwtUtil
+JwtUtil --> ProductController: User
+deactivate JwtUtil
+ProductController -> WishlistService: getWishlistOfUser(request)
+activate WishlistRepository
+WishlistService -> WishlistRepository: findByUser(user)
+activate DB
+WishlistRepository --> DB: findByUser(user)
+DB --> WishlistRepository: Wishlist
+deactivate DB
+WishlistRepository --> WishlistService: List<Wishlist>
+deactivate WishlistRepository
+WishlistService -> ProductController: Return ApiResponse with List<Wishlist>
+ProductController --> ProductPage: ApiResponse with List<Wishlist>
+deactivate ProductController
+
+User -> ProductPage: Clicks "Add to Wishlist"
+ProductPage -> ProductController: POST /add-wishlist
+activate ProductController
+ProductController -> JwtUtil: getUserFromRequest(request)
+activate JwtUtil
+JwtUtil --> ProductController: User
+deactivate JwtUtil
+ProductController -> WishlistService: addWishlist(request, wishListRequest)
+activate WishlistRepository
+WishlistService -> WishlistRepository: findByProductIdAndUserId(wishListRequest.getProductId(), user.getId())
+activate DB
+WishlistRepository --> DB: findByProductIdAndUserId(wishListRequest.getProductId(), user.getId())
+DB --> WishlistRepository: Wishlist
+deactivate DB
+WishlistRepository --> WishlistService: Wishlist (null if not exists)
+deactivate WishlistRepository
+opt Wishlist exists
+    WishlistService -> JwtUtil: new AppException(ErrorCode.PRODUCT_EXISTS_WISHLIST)
+    activate JwtUtil
+    JwtUtil --> WishlistService: AppException
+    deactivate JwtUtil
+    WishlistService -> ProductController: Return ApiResponse with ErrorCode.PRODUCT_EXISTS_WISHLIST
+    ProductController --> ProductPage: ApiResponse with ErrorCode.PRODUCT_EXISTS_WISHLIST
+else Wishlist does not exist
+    WishlistService -> WishlistRepository: save(wishlist)
+    activate DB
+    WishlistRepository --> DB: save(wishlist)
+    DB --> WishlistRepository: Wishlist
+    deactivate DB
+    WishlistRepository --> WishlistService: Wishlist (saved)
+    WishlistService -> ProductController: Return ApiResponse("add wish list success")
+    ProductController --> ProductPage: ApiResponse("add wish list success")
+end
+
+User -> ProductPage: Clicks "Remove from Wishlist by Product ID"
+ProductPage -> ProductController: DELETE /delete-wishlist-by-product-id/{productId}
+activate ProductController
+ProductController -> JwtUtil: getUserFromRequest(request)
+activate JwtUtil
+JwtUtil --> ProductController: User
+deactivate JwtUtil
+ProductController -> WishlistService: deleteWishlistByProductId(request, productId)
+activate WishlistRepository
+WishlistService -> WishlistRepository: findByProductIdAndUserId(productId, user.getId())
+activate DB
+WishlistRepository --> DB: findByProductIdAndUserId(productId, user.getId())
+deactivate DB
+WishlistRepository --> WishlistService: Wishlist (null if not found)
+deactivate WishlistRepository
+opt Wishlist not found
+    WishlistService -> JwtUtil: new AppException(ErrorCode.WISHLIST_NOT_FOUND)
+    activate JwtUtil
+    JwtUtil --> WishlistService: AppException
+    deactivate JwtUtil
+    WishlistService -> ProductController: Return ApiResponse with ErrorCode.WISHLIST_NOT_FOUND
+    ProductController --> ProductPage: ApiResponse with ErrorCode.WISHLIST_NOT_FOUND
+else Wishlist found
+    WishlistService -> WishlistRepository: deleteById(wishlist.getId())
+    activate DB
+    WishlistRepository --> DB: deleteById(wishlist.getId())
+    DB --> WishlistRepository: Wishlist
+    deactivate DB
+    WishlistRepository --> WishlistService: void (delete successful)
+    WishlistService -> ProductController: Return ApiResponse("delete wish list success")
+    ProductController --> ProductPage: ApiResponse("delete wish list success")
+end
+
+deactivate ProductController
+
+@enduml
